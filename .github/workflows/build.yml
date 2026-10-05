@@ -7,13 +7,13 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Set up JDK 17
+    - name: Set up Java JDK
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
@@ -27,7 +27,7 @@ jobs:
     - name: Install System Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libsqlite3-dev sqlite3 bzip2 libbz2-dev zlib1g-dev libssl-dev openssl libgdbm-dev libgdbm-compat-dev liblzma-dev libreadline-dev libffi-dev uuid-dev libncurses5-dev libncursesw5-dev xz-utils libtool autoconf automake cmake gettext pkg-config zip unzip
+        sudo apt-get install -y build-essential libsqlite3-dev sqlite3 bzip2 libbz2-dev zlib1g-dev libssl-dev openssl libgdbm-dev libgdbm-compat-dev liblzma-dev libreadline-dev libffi-dev uuid-dev libncurses5-dev libncursesw5-dev xz-utils libtool autoconf automake cmake gettext pkg-config zip unzip openjdk-17-jdk
         pip install --upgrade pip
         pip install "cython<3.0.0" buildozer
 
@@ -44,4 +44,3 @@ jobs:
       with:
         name: Sweety-APK
         path: bin/*.apk
-        
