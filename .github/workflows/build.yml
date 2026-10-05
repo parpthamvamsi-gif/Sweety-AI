@@ -18,6 +18,9 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -33,11 +36,11 @@ jobs:
       run: |
         buildozer init
         sed -i 's/android.api = 33/android.api = 31/' buildozer.spec
+        sed -i 's/android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
         sed -i 's/requirements = python3,kivy/requirements = python3==3.10.12,kivy==2.3.0,requests/' buildozer.spec
         
-        # Pre-accept all Android SDK licenses
-        mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
-        printf "\n24333f8a637b3744d1006f7793024665b13c334a\n57029232ed8d41878590a9d92558d05e5d223d4d\nd56f5187479451eabf01fb78af6dfcb131a6481e\n26662a005b57703704d713832683456d3fa3001c\n33b622e747107a0b76a8700619cce0fe99811bd4\n84831b94fe7030615c6a207bafd13d2b142c013f\nf15447138131333e680a6b7d1e31e5c26b896f60" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+        # Accept all SDK licenses automatically via sdkmanager
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
         
         buildozer android debug
 
@@ -46,3 +49,4 @@ jobs:
       with:
         name: Sweety-APK
         path: bin/*.apk
+        
