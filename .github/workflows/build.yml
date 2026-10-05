@@ -13,10 +13,10 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Build with Buildozer
-      uses: simple-elf/action-buildozer@master
+    - name: Build with Buildozer Action
+      uses: subzero-cloud/action-buildozer@master
       with:
-        command: buildozer android debug
+        workdir: .
         buildozer_version: master
 
     - name: Upload APK Artifact
