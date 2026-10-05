@@ -1,81 +1,43 @@
-import os
-import requests
-import sys
-import io
-from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.label import Label
-from kivy.uix.button import Button
-from kivy.core.window import Window
+name: Build Android APK
 
-API_KEY = os.getenv("GEMINI_API_KEY", "DEFAULT_FALLBACK_KEY")
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
 
-class SweetyCore(App):
-    def build(self):
-        Window.clearcolor = (0.01, 0.03, 0.07, 1)
-        layout = BoxLayout(orientation='vertical', padding=20, spacing=20)
-        
-        self.status_label = Label(
-            text="SWEETY AI ENGINE v1.1\n[SELF-PROGRAMMING & AUTONOMOUS ACTIVE]",
-            font_size='16sp',
-            halign='center',
-            color=(0, 0.94, 1, 1)
-        )
-        layout.add_widget(self.status_label)
-        
-        self.btn = Button(
-            text="🎙️️ ACTIVATE SWEETY",
-            size_hint=(1, 0.2),
-            background_color=(0, 0.94, 1, 1),
-            color=(0, 0, 0, 1),
-            bold=True
-        )
-        self.btn.bind(on_press=self.run_sweety)
-        layout.add_widget(self.btn)
-        
-        return layout
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-    def run_sweety(self, instance):
-        self.status_label.text = "Sweety Processing, Sir..."
-        response = self.ask_sweety("System status check")
-        self.status_label.text = f"Sweety: {response}"
+    steps:
+    - uses: actions/checkout@v4
 
-    def ask_sweety(self, prompt):
-        system_instruction = (
-            "You are Sweety, an autonomous, self-programming assistant. "
-            "Call the user 'Sir'. Respond in witty Teluglish. "
-            "If code execution is required, generate executable Python code wrapped in <code>...</code> tags."
-        )
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={API_KEY}"
-        payload = {
-            "contents": [
-                {"parts": [{"text": system_instruction}]},
-                {"parts": [{"text": prompt}]}
-            ]
-        }
-        try:
-            res = requests.post(url, json=payload, timeout=10).json()
-            reply = res['candidates'][0]['content']['parts'][0]['text']
-            
-            if "<code>" in reply and "</code>" in reply:
-                code_snippet = reply.split("<code>")[1].split("</code>")[0]
-                exec_result = self.execute_self_code(code_snippet)
-                return f"{reply.split('<code>')[0]} \n[Executed Code Output: {exec_result}]"
-            
-            return reply
-        except Exception as e:
-            return f"System error, Sir: {e}"
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
 
-    def execute_self_code(self, code_str):
-        try:
-            buffer = io.StringIO()
-            sys.stdout = buffer
-            exec(code_str)
-            sys.stdout = sys.__stdout__
-            return buffer.getvalue().strip()
-        except Exception as err:
-            sys.stdout = sys.__stdout__
-            return f"Code execution error: {err}"
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
 
-if __name__ == '__main__':
-    SweetyCore().run()
+    - name: Install dependencies
+      run: |
+        pip install --upgrade "cython<3.0.0" buildozer
+        sudo apt-get update
+        sudo apt-get install -y build-essential libsqlite3-dev sqlite3 bzip2 libbz2-dev zlib1g-dev libssl-dev openssl libgdbm-dev libgdbm-compat-dev liblzma-dev libreadline-dev libffi-dev uuid-dev libncurses5-dev libncursesw5-dev xz-utils libtool autoconf automake cmake gettext pkg-config
+
+    - name: Build with Buildozer
+      run: |
+        buildozer init
+        sed -i 's/android.api = 33/android.api = 31/' buildozer.spec
+        sed -i 's/requirements = python3,kivy/requirements = python3==3.10.12,kivy==2.3.0,requests/' buildozer.spec
+        yes y | buildozer -v android debug
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Sweety-APK
+        path: bin/*.apk
