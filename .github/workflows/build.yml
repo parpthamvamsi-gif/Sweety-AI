@@ -20,15 +20,25 @@ jobs:
         # Patch root check prompt
         python3 -c "import buildozer; print(buildozer.__file__)" | xargs -I {} sed -i 's/self.check_root()/# self.check_root()/g' {}
 
-        # Set Home environment variable to container default
         export HOME=/root
 
         buildozer init
+        
+        # Buildozer spec settings
         sed -i 's/android.api = 33/android.api = 31/' buildozer.spec
+        sed -i 's/#android.build_tools_version = 33.0.2/android.build_tools_version = 31.0.0/' buildozer.spec
         sed -i 's/android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
         sed -i 's/requirements = python3,kivy/requirements = python3==3.10.12,kivy==2.3.0,requests/' buildozer.spec
 
-        # Run buildozer android debug
+        # Force accept SDK licenses across all locations
+        mkdir -p /root/.buildozer/android/platform/android-sdk/licenses
+        mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
+        
+        LICENSE_HASH="24333f8a637b3744d1006f7793024665b13c334a\n8933 strain 243256674784846\n57029232ed8d41878590a9d92558d05e5d223d4d\nd56f5187479451eabf01fb78af6dfcb131a6481e\n26662a005b57703704d713832683456d3fa3001c\n33b622e747107a0b76a8700619cce0fe99811bd4\n84831b94fe7030615c6a207bafd13d2b142c013f\nf15447138131333e680a6b7d1e31e5c26b896f60"
+        
+        printf "$LICENSE_HASH" > /root/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+        printf "$LICENSE_HASH" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+
         buildozer -v android debug
 
     - name: Upload APK Artifact
