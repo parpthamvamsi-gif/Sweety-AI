@@ -15,19 +15,20 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Patch Buildozer Root Check & Build APK
+    - name: Patch & Build APK
       run: |
         # Patch root check prompt
         python3 -c "import buildozer; print(buildozer.__file__)" | xargs -I {} sed -i 's/self.check_root()/# self.check_root()/g' {}
 
-        # Pre-install and link Android build-tools aidl
-        yes | /root/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/root/.buildozer/android/platform/android-sdk "build-tools;33.0.2" "platforms;android-31" || true
+        # Set Home environment variable to container default
+        export HOME=/root
 
         buildozer init
         sed -i 's/android.api = 33/android.api = 31/' buildozer.spec
         sed -i 's/android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
         sed -i 's/requirements = python3,kivy/requirements = python3==3.10.12,kivy==2.3.0,requests/' buildozer.spec
 
+        # Run buildozer android debug
         buildozer -v android debug
 
     - name: Upload APK Artifact
