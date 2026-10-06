@@ -13,7 +13,7 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Set up Java JDK
+    - name: Set up Java JDK 17
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
@@ -27,7 +27,7 @@ jobs:
     - name: Install System Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libsqlite3-dev sqlite3 bzip2 libbz2-dev zlib1g-dev libssl-dev openssl libgdbm-dev libgdbm-compat-dev liblzma-dev libreadline-dev libffi-dev uuid-dev libncurses5-dev libncursesw5-dev xz-utils libtool autoconf automake cmake gettext pkg-config zip unzip openjdk-17-jdk
+        sudo apt-get install -y build-essential libsqlite3-dev sqlite3 bzip2 libbz2-dev zlib1g-dev libssl-dev openssl libgdbm-dev libgdbm-compat-dev liblzma-dev libreadline-dev libffi-dev uuid-dev libncurses5-dev libncursesw5-dev xz-utils libtool autoconf automake cmake gettext pkg-config zip unzip
         pip install --upgrade pip
         pip install "cython<3.0.0" buildozer
 
@@ -37,10 +37,16 @@ jobs:
         sed -i 's/android.api = 33/android.api = 31/' buildozer.spec
         sed -i 's/android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
         sed -i 's/requirements = python3,kivy/requirements = python3==3.10.12,kivy==2.3.0,requests/' buildozer.spec
-        buildozer -v android debug
+        
+        # Accept all Android SDK Licenses explicitly
+        mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
+        echo -e "\n8933 strain 243256674784846" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+        
+        yes | buildozer -v android debug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: Sweety-APK
         path: bin/*.apk
+        
