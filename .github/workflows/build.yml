@@ -15,13 +15,13 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Build APK with Pre-configured Kivy Docker Environment
+    - name: Build APK with Kivy Docker
       run: |
         buildozer init
         sed -i 's/android.api = 33/android.api = 31/' buildozer.spec
         sed -i 's/android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
         sed -i 's/requirements = python3,kivy/requirements = python3==3.10.12,kivy==2.3.0,requests/' buildozer.spec
-        buildozer -v android debug
+        yes | buildozer -v android debug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
